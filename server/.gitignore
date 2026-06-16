@@ -1,0 +1,54 @@
+# Environment variables
+.env
+.env.*
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Java
+target/
+*.class
+
+# C/C++
+*.o
+*.obj
+*.exe
+
+# Coverage reports
+coverage/
+.coverage
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# GitHub secrets (examples)
+*.pem
+*.key
