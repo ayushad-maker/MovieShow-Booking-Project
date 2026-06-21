@@ -1,11 +1,10 @@
+import { clerkClient } from "@clerk/express";
+
 export const protectAdmin = async (req, res, next) => {
   console.log("protectAdmin called");
   try {
     const { userId } = req.auth();
 
-     console.log("userId:", userId);
-
-  
 
     if (!userId) {
       return res.status(401).json({

@@ -1,20 +1,24 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { BrowserRouter } from 'react-router-dom'
-import { ClerkProvider } from '@clerk/react'
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import { BrowserRouter } from "react-router-dom";
+import { ClerkProvider } from "@clerk/react";
+import { AppProvider } from "./Context/AppContext.jsx";
 
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-
-if(!clerkPubKey) {
-    throw new Error("Clerk publishable key is not defined. Please set the VITE_CLERK_PUBLISHABLE_KEY environment variable.")
+if (!clerkPubKey) {
+  throw new Error(
+    "Clerk publishable key is not defined. Please set the VITE_CLERK_PUBLISHABLE_KEY environment variable.",
+  );
 }
 
-createRoot(document.getElementById('root')).render(
-    <ClerkProvider publishableKey={clerkPubKey}>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </ClerkProvider>
-)
+createRoot(document.getElementById("root")).render(
+  <ClerkProvider publishableKey={clerkPubKey}>
+    <BrowserRouter>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </BrowserRouter>
+  </ClerkProvider>,
+);
