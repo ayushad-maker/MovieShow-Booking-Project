@@ -4,8 +4,13 @@ import Loading from "../../Components/Loading";
 import Title from "../../Components/admin/Title";
 import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
 import { kConverter } from "../../Lib/Kconverter";
+import { useAppContext } from "../../Context/AppContext";
+import toast from "react-hot-toast";
+
 
 const Addshows = () => {
+  const { user, getToken, axios, image_base_url } = useAppContext();
+
   const currency = import.meta.env.VITE_CURRENCY;
 
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
@@ -13,9 +18,61 @@ const Addshows = () => {
   const [dateTimeSelection, setDataTimeSelection] = useState({});
   const [dataTimeInput, setDateTimeInput] = useState("");
   const [showPrice, setShowPrice] = useState("");
+  const [addingShow, setAddingShow] = useState(false);
 
   const fetchNowPlayingMovies = async () => {
-    setNowPlayingMovies(dummyShowsData);
+    try {
+      const { data } = await axios.get("/api/show/now-playing", {
+        headers: { Authorization: `Bearer ${await getToken()}.` },
+      });
+      if (data.success) {
+        setNowPlayingMovies(data.movies);
+      }
+    } catch (error) {
+      console.error("error in fetching movies", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setAddingShow(true);
+
+      if (
+        !selectedMovie ||
+        Object.keys(dateTimeSelection).length == 0 ||
+        !showPrice
+      ) {
+        return toast("Missing required fields.");
+      }
+
+      const showsInput = Object.entries(dateTimeSelection).map(
+        ([date, time]) => ({ date, time }),
+      );
+
+      const payLoad = {
+        movieId: selectedMovie,
+        showPrice: Number(showPrice),
+        showsInput,
+      };
+
+      const { data } = await axios.post("api/show/add", payLoad, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (data.success) {
+        toast.success(data.message)
+        setSelectedMovie(null);
+        setDataTimeSelection({});
+        setShowPrice("");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log("Submisson error", error);
+      toast.error("An error Occurred.Please try again.");
+    }
+
+    setAddingShow(false);
   };
 
   const handleDateTimeAdd = () => {
@@ -47,8 +104,10 @@ const Addshows = () => {
   };
 
   useEffect(() => {
-    fetchNowPlayingMovies();
-  }, []);
+    if (user) {
+      fetchNowPlayingMovies();
+    }
+  }, [user]);
 
   return nowPlayingMovies.length > 0 ? (
     <>
@@ -66,7 +125,7 @@ const Addshows = () => {
                 onClick={() => setSelectedMovie(movie.id)}
               >
                 <img
-                  src={movie.poster_path}
+                  src={image_base_url + movie.poster_path}
                   alt=""
                   className="w-full brightness-90"
                 />
@@ -134,7 +193,6 @@ const Addshows = () => {
       </div>
 
       {Object.keys(dateTimeSelection).length > 0 && (
-        
         <div className="mt-6">
           <h2 className="mb-2">Selected Date-Time</h2>
           <ul className="space-y-3">
@@ -143,7 +201,10 @@ const Addshows = () => {
                 <div className="font-medium">{date}</div>
                 <div className="flex flex-wrap gap-2 mt-1 text-sm ">
                   {times.map((time) => (
-                    <div key={time} className="border border-primary px-2 py-1 flex items-center rounded hover:scale-110">
+                    <div
+                      key={time}
+                      className="border border-primary px-2 py-1 flex items-center rounded hover:scale-110"
+                    >
                       <span>{time}</span>
                       <DeleteIcon
                         onClick={() => handleRemoveTime(date, time)}
@@ -157,11 +218,13 @@ const Addshows = () => {
             ))}
           </ul>
         </div>
-        
-
       )}
 
-      <button className="bg-primary px-3 py-2 rounded-md hover:bg-primary-dull hover:scale-105 cursor-pointer mt-7 flex items-center justify-center ml-15">
+      <button
+        onClick={handleSubmit}
+        disabled={addingShow}
+        className="bg-primary px-3 py-2 rounded-md hover:bg-primary-dull hover:scale-105 cursor-pointer mt-7 flex items-center justify-center ml-15"
+      >
         Add Show
       </button>
     </>

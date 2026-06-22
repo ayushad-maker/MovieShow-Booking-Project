@@ -1,5 +1,6 @@
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
+import User from "../models/user.js";
 
 export const isAdmin = async (req, res) => {
   return res.json({
@@ -11,8 +12,8 @@ export const isAdmin = async (req, res) => {
 export const dashBoardData = async (req, res) => {
   try {
     const bookings = await Booking.find({ isPaid: true });
-    const activeShows = await Show.find(showDateTime, {
-      $gte: new Date(),
+    const activeShows = await Show.find({
+      showDateTime: { $gte: new Date() },
     }).populate("movie");
 
     const totalUser = await User.countDocuments();
@@ -42,9 +43,11 @@ export const dashBoardData = async (req, res) => {
 
 export const getAllShow = async (req, res) => {
   try {
-    const allShows = (
-      await Show.find(showDateTime, { $gte: new Date() }).populate("movie")
-    ).toSorted({ showDateTime: 1 });
+    const allShows = await Show.find({
+      showDateTime: { $gte: new Date() },
+    })
+      .populate("movie")
+      .sort({ showDateTime: 1 });
 
     return res.json({
       success: true,
@@ -59,27 +62,26 @@ export const getAllShow = async (req, res) => {
   }
 };
 
-export const getAllBookings = async (req,res)=>{
-   
-    try {
-         
-        const bookings = await Booking.find({}).populate('user').populate({
-            path : 'show',
-            populate: {path : 'movie'}
-        }).sort({createdAt : -1});
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({})
+      .populate("user")
+      .populate({
+        path: "show",
+        populate: { path: "movie" },
+      })
+      .sort({ createdAt: -1 });
 
-        return res.json({
-            success : true,
-            message : "get all bookings successfully",
-            bookings
-        })
-
-    } catch (error) {
-         console.log(error);
-         return res.json({
-            success: false,
-            message: error.message
-         })
-    }
-
-}
+    return res.json({
+      success: true,
+      message: "get all bookings successfully",
+      bookings,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

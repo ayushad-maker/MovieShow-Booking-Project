@@ -21,7 +21,7 @@ export const getNowPlayingMovies = async (req, res) => {
 };
 
 export const addShow = async (req, res) => {
-  console.log("addShow called");
+
   try {
     const { movieId, showsInput, showPrice } = req.body;
 
@@ -39,10 +39,9 @@ export const addShow = async (req, res) => {
       ]);
 
       const movieApiData = movieDetailsResponse.data;
-      console.log(movieApiData);
+  
       const movieCreditsData = movieCreditsResponse.data;
-      console.log(movieCreditsData);
-      console.log("hello");
+  
 
       const movieDetails = {
         _id: movieId,

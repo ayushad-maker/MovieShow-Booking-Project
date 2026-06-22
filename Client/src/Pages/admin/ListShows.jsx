@@ -3,27 +3,27 @@ import { dummyShowsData } from "../../assets/assets";
 import Loading from "../../Components/Loading";
 import Title from "../../Components/admin/Title";
 import { dateFormat } from "../../Lib/dataFormat";
+import { useAppContext } from "../../Context/AppContext";
+import toast from "react-hot-toast";
 
 const ListShows = () => {
   const currency = import.meta.env.VITE_CURRENCY;
+  const { user, getToken, axios } = useAppContext();
 
   const [show, setShow] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const getAllShows = async () => {
     try {
-      setShow([
-        {
-          movie: dummyShowsData[0],
-          showDataTime: "2025-06-30T02:30:00.000Z",
-          showPrice: 59,
-          occupiedSeats: {
-            A1: "user_1",
-            B1: "user_2",
-            C1: "user_3",
-          },
-        },
-      ]);
+      const { data } = await axios.get("/api/admin/all-shows", {
+        headers: { Authorization: `Bearer ${getToken()}.` },
+      });
+      if (data.success) {
+        toast.success("fetch All Success.");
+        setShow(data.allShows);
+      } else {
+        toast.error(data.message);
+      }
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -33,8 +33,10 @@ const ListShows = () => {
   console.log(dummyShowsData[0]);
 
   useEffect(() => {
-    getAllShows();
-  }, []);
+    if (user) {
+      getAllShows();
+    }
+  }, [user]);
 
   return !loading ? (
     <>

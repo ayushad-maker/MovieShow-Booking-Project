@@ -3,21 +3,35 @@ import Loading from "../../Components/Loading";
 import Title from "../../Components/admin/Title";
 import { dummyBookingData } from "../../assets/assets";
 import { dateFormat } from "../../Lib/dataFormat";
+import { useAppContext } from "../../Context/AppContext";
+import toast from "react-hot-toast";
 
 const ListBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
+
+  const { user, getToken, axios } = useAppContext();
 
   const [show, setShow] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const getShows = async () => {
-    setShow(dummyBookingData);
+    const { data } = await axios.get("/api/admin/all-bookings", {
+      headers: { Authorization: `Bearer ${getToken()}.` },
+    });
+    if (data.success) {
+      toast.success("Get All Bookings");
+      setShow(data.bookings);
+    } else {
+      toast.error(data.message);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
-    getShows();
-  }, []);
+    if (user) {
+      getShows();
+    }
+  }, [user]);
 
   return !loading ? (
     <>
@@ -34,17 +48,20 @@ const ListBookings = () => {
             </tr>
           </thead>
           <tbody className="font-small text-sm">
-            {show.map((shows,index)=>(
+            {show.map((shows, index) => (
               <tr key={index} className="border-b border-primary/20">
-                <td className="p-2 min-w-45 pl-5">{shows.user.name}</td>                
-                <td className="p-2">{shows.show.movie.title}</td>                
-                <td className="p-2">{dateFormat(shows.show.showDateTime)}</td>                
-                <td className="p-2">{Object.keys(shows.bookedSeats).map(seat=>shows.bookedSeats[seat]).join(",")}</td>                
-                <td className="p-2">{currency} {shows.amount}</td>                
-
-
+                <td className="p-2 min-w-45 pl-5">{shows.user.name}</td>
+                <td className="p-2">{shows.show.movie.title}</td>
+                <td className="p-2">{dateFormat(shows.show.showDateTime)}</td>
+                <td className="p-2">
+                  {Object.keys(shows.bookedSeats)
+                    .map((seat) => shows.bookedSeats[seat])
+                    .join(",")}
+                </td>
+                <td className="p-2">
+                  {currency} {shows.amount}
+                </td>
               </tr>
-
             ))}
           </tbody>
         </table>
