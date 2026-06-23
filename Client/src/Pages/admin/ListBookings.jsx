@@ -15,8 +15,10 @@ const ListBookings = () => {
   const [loading, setLoading] = useState(true);
 
   const getShows = async () => {
+     const token = await getToken();
+
     const { data } = await axios.get("/api/admin/all-bookings", {
-      headers: { Authorization: `Bearer ${getToken()}.` },
+      headers: { Authorization: `Bearer ${token}.` },
     });
     if (data.success) {
       toast.success("Get All Bookings");

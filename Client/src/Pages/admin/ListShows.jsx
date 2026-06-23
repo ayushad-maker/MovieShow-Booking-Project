@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { dummyShowsData } from "../../assets/assets";
 import Loading from "../../Components/Loading";
 import Title from "../../Components/admin/Title";
-import { dateFormat } from "../../Lib/dataFormat";
+import { dateFormat } from "../../Lib/dataFormat.js";
 import { useAppContext } from "../../Context/AppContext";
 import toast from "react-hot-toast";
 
@@ -15,8 +15,11 @@ const ListShows = () => {
 
   const getAllShows = async () => {
     try {
+      
+      const token =await  getToken();
+
       const { data } = await axios.get("/api/admin/all-shows", {
-        headers: { Authorization: `Bearer ${getToken()}.` },
+        headers: { Authorization: `Bearer ${token}.` },
       });
       if (data.success) {
         toast.success("fetch All Success.");
@@ -30,7 +33,7 @@ const ListShows = () => {
     }
   };
 
-  console.log(dummyShowsData[0]);
+ 
 
   useEffect(() => {
     if (user) {
@@ -58,7 +61,7 @@ const ListShows = () => {
                 className="border-b border-primary/10 bg-primary/5 even:bg-primary/10"
               >
                 <td className="p-2 min-w-45 pl-5">{shows.movie.title}</td>
-                <td className="p-2">{dateFormat(shows.showDataTime)}</td>
+                <td className="p-2">{dateFormat(shows.showDateTime)}</td>
                 <td className="p-2">
                   {Object.keys(shows.occupiedSeats).length}
                 </td>

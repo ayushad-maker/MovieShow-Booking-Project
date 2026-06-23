@@ -4,6 +4,7 @@ import { MenuIcon, SearchIcon, TicketPlus, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useClerk, UserButton, useUser } from "@clerk/react";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../Context/AppContext";
 
 
 const Navbar = () => {
@@ -12,6 +13,8 @@ const Navbar = () => {
   const {openSignIn} = useClerk();
 
   const Navigate = useNavigate()
+
+  const {favouriteMovies} = useAppContext();
 
 
 
@@ -57,13 +60,13 @@ border-gray-300/20 overflow-hidden transition-[width] duration-300 ${isMenuOpen 
         >
           Releases
         </Link>
-        <Link
+       {favouriteMovies.length > 0 &&  <Link
           to="/favourites"
             onClick={()=> {setIsMenuOpen(false),scrollTo(0,0)}}
           className=" text-lg font-medium hover:text-primary transition mx-6"
         >
           Favorites
-        </Link>
+        </Link>}
       </div>
 
       <div className="flex items-center gap-8 justify-between">
@@ -76,7 +79,7 @@ border-gray-300/20 overflow-hidden transition-[width] duration-300 ${isMenuOpen 
           ) : (
             <UserButton >
               <UserButton.MenuItems>
-                <UserButton.Action label="My Bookings" labelIcon={<TicketPlus width={16} />} onClick={()=>{Navigate("/bookings")}}/>
+                <UserButton.Action label="My Bookings" labelIcon={<TicketPlus width={16} />} onClick={()=>{Navigate("/myBookings")}}/>
               </UserButton.MenuItems>
             </UserButton>
           )

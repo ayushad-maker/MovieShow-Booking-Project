@@ -61,7 +61,7 @@ export const AppProvider = ({ children }) => {
       const { data } = await axios.get("/api/show/all");
 
       if (data.success) {
-        setShows(data.show);
+        setShows(data.shows);
       }
     } catch (error) {
       console.log(error);
@@ -73,7 +73,7 @@ export const AppProvider = ({ children }) => {
       const { data } = await axios.get("/api/user/favorites");
 
       if (data.success) {
-        setFavouriteMovies(data.favouriteMovies);
+        setFavouriteMovies(data.movies);
       }
     } catch (error) {
       console.log(error);
@@ -99,6 +99,7 @@ export const AppProvider = ({ children }) => {
     setShows,
     favouriteMovies,
     setFavouriteMovies,
+    fetchFavouriteMovies,
     user,
     getToken,
     image_base_url

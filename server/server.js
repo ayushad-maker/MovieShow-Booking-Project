@@ -2,13 +2,14 @@ import express from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import "dotenv/config";
-import connectDB from "./configs/db.js";
+
 import { serve } from "inngest/express";
 import { inngest, functions } from "./ingest/index.js"
 import showRouter from "./Routes/showRoutes.js";
 import BoookingRouter from "./Routes/bookingRoutes.js";
 import AdminRoutes from "./Routes/adminRoutes.js";
 import UserRouter from "./Routes/userRoutes.js";
+import { connectDB } from "./configs/db.js";
 
 const app = express();
 const port = 3000;
