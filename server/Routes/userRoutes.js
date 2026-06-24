@@ -2,6 +2,7 @@ import express from "express";
 import { getFavorites, UpdateFavourite, UserBookings } from "../controller/userController.js";
 
 
+
 const UserRouter = express.Router();
 
 UserRouter.get("/bookings",UserBookings);

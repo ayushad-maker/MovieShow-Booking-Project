@@ -8,6 +8,7 @@ import DateSelect from "../Components/DateSelect";
 import MovieCard from "../Components/MovieCard";
 import Loading from "../Components/Loading";
 import { useAppContext } from "../Context/AppContext";
+import toast from "react-hot-toast";
 
 const MovieDetails = () => {
   const navigate = useNavigate();
@@ -18,19 +19,37 @@ const MovieDetails = () => {
     user,
     image_base_url,
     shows,
-    fetchFavoriteMovies,
+    fetchFavouriteMovies,
     favouriteMovies,
-    axios
+    axios,
   } = useAppContext();
 
   const getShow = async () => {
     try {
-      const {data} = await axios.get(`/api/show/${id}`)
-        if(data.success){
-         setShow(data);
+      const { data } = await axios.get(`/api/show/${id}`);
+      if (data.success) {
+        setShow(data);
       }
     } catch (error) {
-       console.log(error);
+      console.log(error);
+    }
+  };
+
+  const getFavoriteMovie = async () => {
+    try {
+      const token = await getToken();
+
+      const { data } = await axios.post(
+        "/api/user/update-favorite",
+        { movieId: id },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (data.success) {
+        await fetchFavouriteMovies();
+        toast.success(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -78,8 +97,13 @@ const MovieDetails = () => {
             >
               Buy Tickets
             </a>
-            <button className="bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95">
-              <Heart className={`w-5 h-5`} />
+            <button
+              onClick={getFavoriteMovie}
+              className="bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95"
+            >
+              <Heart
+                className={`w-5 h-5 ${favouriteMovies.find((movie) => movie._id === id) ? "fill-primary text-primary" : ""}`}
+              />
             </button>
           </div>
         </div>
