@@ -6,6 +6,7 @@ import { ArrowRightIcon, ClockIcon } from "lucide-react";
 import isoTimeFormat from "../Lib/isoTimeFormat";
 import BlurCircle from "../Components/BlurCircle";
 import toast from "react-hot-toast";
+import { useAppContext } from "../Context/AppContext";
 
 const SeatLayout = () => {
   const groupRows = [
@@ -20,16 +21,23 @@ const SeatLayout = () => {
   const [selectedSeats, setselectedSeats] = useState([]);
   const [selectedTime, setselectedTime] = useState(null);
   const [show, setShow] = useState(null);
+  const [occupiedSeats, setOccupiedSeats] = useState([]);
 
   const navigate = useNavigate();
 
+  const { user, getToken, axios } = useAppContext();
+
   const getShow = async () => {
-    const show = dummyShowsData.find((show) => show._id === id);
-    if (show) {
-      setShow({
-        movie: show,
-        dateTime: dummyDateTimeData,
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(`/api/show/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      if (data.success) {
+        setShow(data);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -60,8 +68,8 @@ const SeatLayout = () => {
               key={seatId}
               onClick={() => handleSeatClick(seatId)}
               className={`h-8 w-8 rounded border hover:scale-115 border-primary/60 cursor-pointer ${
-                selectedSeats.includes(seatId) ? "bg-primary text-white" : ""
-              }`}
+                selectedSeats.includes(seatId) && "bg-primary text-white"
+              } ${occupiedSeats.includes(seatId) && "opacity-50"}`}
             >
               {seatId}
             </button>
@@ -71,9 +79,30 @@ const SeatLayout = () => {
     </div>
   );
 
+  const getOccupiedSeats = async () => {
+    try {
+      const { data } = await axios.get(
+        `/api/bookings/seats/${selectedSeats.showId}`,
+      );
+      if (data.success) {
+        setOccupiedSeats(data.occupiedSeats);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   useEffect(() => {
-    getShow();
-  }, []);
+    if (user) {
+      getShow();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedTime) {
+      getOccupiedSeats();
+    }
+  }, [selectedTime]);
 
   return show ? (
     <div className="flex flex-col md:flex-row px-6 md:px-16 lg:px-40 py-30 md:pt-50">
@@ -98,7 +127,7 @@ const SeatLayout = () => {
       <div className="relative flex-1 flex flex-col items-center max-md:mt-16 ">
         <BlurCircle top="-100px" left="-100px" />
         <BlurCircle top="0px" left="0px" />
-        <BlurCircle top="10px" right="-100px"/>
+        <BlurCircle top="10px" right="-100px" />
         <h1 className="text-2xl font-semibold mb-4">Select your Seat</h1>
         <img src={assets.screenImage} alt="" />
         <p className="text-gray-400 text-md mb-6">Screen Side</p>
@@ -114,12 +143,14 @@ const SeatLayout = () => {
             ))}
           </div>
         </div>
-    
-         <button onClick={()=>navigate("/myBookings")} className="flex items-center gap-1 mt-20 px-10 bg-primary hover:bg-primary-dull py-3 transition rounded-full cursor-pointer font-medium active:scale-95 ">
-            Proceed To CheckOut
-              <ArrowRightIcon strokeWidth={3} className="w-4 h-4"/> 
-         </button>
 
+        <button
+          onClick={() => navigate("/myBookings")}
+          className="flex items-center gap-1 mt-20 px-10 bg-primary hover:bg-primary-dull py-3 transition rounded-full cursor-pointer font-medium active:scale-95 "
+        >
+          Proceed To CheckOut
+          <ArrowRightIcon strokeWidth={3} className="w-4 h-4" />
+        </button>
       </div>
     </div>
   ) : (
