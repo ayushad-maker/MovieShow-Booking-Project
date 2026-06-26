@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { dummyBookingData } from "../assets/assets";
 import BlurCircle from "../Components/BlurCircle";
 import timeFormat from "../Lib/timeFormat";
 import { dateFormat } from "../Lib/dataFormat";
 import Loading from "../Components/Loading";
 import { useAppContext } from "../Context/AppContext";
 import toast from "react-hot-toast";
-import Title from "../Components/admin/Title";
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -22,7 +20,7 @@ const MyBookings = () => {
   } = useAppContext();
 
   const [booking, setBooking] = useState([]);
-  const [loading, isLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const getmyBooking = async () => {
     try {
@@ -36,7 +34,7 @@ const MyBookings = () => {
     } catch (error) {
       toast.error(error.message);
     }
-    isLoading(false);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -45,13 +43,15 @@ const MyBookings = () => {
     }
   }, [user]);
 
-  return isLoading ? (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className="relative px-6 md:px-16 lg:px-40 pt-30 md:pt-40 min-h-[80vh]">
       <BlurCircle top="100px" left="100px" />
       <div>
         <BlurCircle bottom="0px" left="600px" />
       </div>
-      <h1 className="text-lg font-semibold mb-4"><Title  text1="My" text2="Bookings"/></h1>
+      <h1 className="text-lg font-semibold mb-4">My <span className="text-primary">Bookings</span></h1>
 
       {booking.map((item, index) => (
         <div
@@ -103,8 +103,6 @@ const MyBookings = () => {
         </div>
       ))}
     </div>
-  ) : (
-    <Loading />
   );
 };
 

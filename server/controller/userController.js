@@ -14,7 +14,7 @@ export const UserBookings = async (req, res) => {
       .sort({ createdAt: -1 });
 
     return res.json({
-      success: false,
+      success: true,
       bookings,
     });
   } catch (error) {
