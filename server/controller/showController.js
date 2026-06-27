@@ -21,7 +21,6 @@ export const getNowPlayingMovies = async (req, res) => {
 };
 
 export const addShow = async (req, res) => {
-
   try {
     const { movieId, showsInput, showPrice } = req.body;
 
@@ -39,9 +38,8 @@ export const addShow = async (req, res) => {
       ]);
 
       const movieApiData = movieDetailsResponse.data;
-  
+
       const movieCreditsData = movieCreditsResponse.data;
-  
 
       const movieDetails = {
         _id: movieId,
@@ -93,9 +91,7 @@ export const getAllShow = async (req, res) => {
       .sort({ showDateTime: 1 });
 
     const uniqueMovies = [
-      ...new Map(
-        shows.map((show) => [show.movie._id, show.movie])
-      ).values(),
+      ...new Map(shows.map((show) => [show.movie._id, show.movie])).values(),
     ];
 
     res.json({
@@ -119,6 +115,9 @@ export const getShow = async (req, res) => {
       showDateTime: { $gte: new Date() },
     });
 
+    console.log("Movie ID:", movieId);
+    console.log("Shows found:", shows);
+
     const movie = await Movie.findById(movieId);
 
     const dateTime = {};
@@ -128,8 +127,13 @@ export const getShow = async (req, res) => {
       if (!dateTime[date]) {
         dateTime[date] = [];
       }
-      dateTime[date].push({ time: show.showDateTime, showId: show._id });
+      dateTime[date].push({
+        time: show.showDateTime,
+        showId: show._id,
+      });
     });
+
+    console.log("dateTime:", dateTime);
 
     res.json({ success: true, movie, dateTime });
   } catch (error) {

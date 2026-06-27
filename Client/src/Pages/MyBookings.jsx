@@ -25,16 +25,21 @@ const MyBookings = () => {
   const getmyBooking = async () => {
     try {
       const token = await getToken();
+
       const { data } = await axios.get("/api/user/bookings", {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      console.log(data.bookings);
+
       if (data.success) {
         setBooking(data.bookings);
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -42,6 +47,8 @@ const MyBookings = () => {
       getmyBooking();
     }
   }, [user]);
+
+  console.log(booking);
 
   return loading ? (
     <Loading />
@@ -51,9 +58,11 @@ const MyBookings = () => {
       <div>
         <BlurCircle bottom="0px" left="600px" />
       </div>
-      <h1 className="text-lg font-semibold mb-4">My <span className="text-primary">Bookings</span></h1>
+      <h1 className="text-lg font-semibold mb-4">
+        My <span className="text-primary">Bookings</span>
+      </h1>
 
-      {booking.map((item, index) => (
+      {booking.filter((item)=>item.show).map((item, index) => (
         <div
           key={index}
           className="flex flex-col md:flex-row justify-between bg-primary/8 border border-primary/20 rounded-lg mt-4 p-2 max-w-2xl"

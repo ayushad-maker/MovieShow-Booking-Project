@@ -57,6 +57,7 @@ const MovieDetails = () => {
     getShow();
   }, [id]);
 
+
   return show ? (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50">
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
