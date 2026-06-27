@@ -1,6 +1,7 @@
 import { err } from "inngest/types";
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
+import stripe, { Stripe } from "stripe";
 
 export const getAvailableSeats = async (showId, selectedSeats) => {
   try {
@@ -57,9 +58,38 @@ export const createBooking = async (req, res) => {
 
     // payment gateway
 
+    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const line_items = [
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: showData.movie.title,
+          },
+          unit_amount: Math.floor(booking.amount) * 100,
+        },
+        quantity: 1,
+      },
+    ];
+
+    const session = await stripeInstance.checkout.sessions.create({
+      success_url: `${origin}/loading/myBookings`,
+      cancel_url: `${origin}/myBookings`,
+      line_items: line_items,
+      mode: "payment",
+      metadata: {
+        bookingId: booking._id.toString(),
+      },
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+    });
+
+    booking.paymentLink = session.url;
+    await booking.save();
+
     res.json({
       success: true,
-      message: "Booked Successfully.",
+      url:session.url,
     });
   } catch (error) {
     console.log("error");

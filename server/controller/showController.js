@@ -115,8 +115,7 @@ export const getShow = async (req, res) => {
       showDateTime: { $gte: new Date() },
     });
 
-    console.log("Movie ID:", movieId);
-    console.log("Shows found:", shows);
+   
 
     const movie = await Movie.findById(movieId);
 
@@ -133,7 +132,7 @@ export const getShow = async (req, res) => {
       });
     });
 
-    console.log("dateTime:", dateTime);
+  
 
     res.json({ success: true, movie, dateTime });
   } catch (error) {

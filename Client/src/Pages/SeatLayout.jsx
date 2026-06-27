@@ -42,23 +42,27 @@ const SeatLayout = () => {
   };
 
   const handleSeatClick = (seatId) => {
-    if (!selectedTime) {
-      return toast("Please select time first");
+    try {
+      if (!selectedTime) {
+        return toast("Please select time first");
+      }
+  
+      if (!selectedSeats.includes(seatId) && selectedSeats.length > 4) {
+        return toast("You can Only select 5 Seats");
+      }
+  
+      if(occupiedSeats.includes(seatId)){
+         return toast("This seat is already Occupied.");
+      }
+  
+      setselectedSeats((prev) =>
+        prev.includes(seatId)
+          ? prev.filter((seat) => seat !== seatId)
+          : [...prev, seatId],
+      );
+    } catch (error) {
+      toast.error(error.message);
     }
-
-    if (!selectedSeats.includes(seatId) && selectedSeats.length > 4) {
-      return toast("You can Only select 5 Seats");
-    }
-
-    if(occupiedSeats.includes(seatId)){
-       return toast("This seat is already Occupied.");
-    }
-
-    setselectedSeats((prev) =>
-      prev.includes(seatId)
-        ? prev.filter((seat) => seat !== seatId)
-        : [...prev, seatId],
-    );
   };
 
   const renderSeats = (row, count = 9) => (
@@ -85,7 +89,7 @@ const SeatLayout = () => {
 
   const getOccupiedSeats = async () => {
   try {
-    console.log(selectedTime.showId);
+  
 
     const { data } = await axios.get(
       `/api/booking/seats/${selectedTime.showId}`
@@ -115,8 +119,7 @@ const SeatLayout = () => {
       const {data} = await axios.post("/api/booking/create",{showId : selectedTime.showId,selectedSeats},{headers:{Authorization:`Bearer ${token}.`}});
   
       if(data.success){
-        toast.success(data.message);
-        navigate("/myBookings");
+        window.location.href = data.url;
       }else{
         toast.error(data.message);
       }

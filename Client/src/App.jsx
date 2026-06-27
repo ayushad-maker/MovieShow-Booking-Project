@@ -15,6 +15,7 @@ import ListShows from "./Pages/admin/ListShows.jsx";
 import ListBookings from "./Pages/admin/ListBookings.jsx";
 import { useAppContext } from "./Context/AppContext.jsx";
 import { SignIn } from "@clerk/react";
+import Loading from "./Components/Loading.jsx";
 
 const App = () => {
   const isAdminRoute = useLocation().pathname.startsWith("/admin");
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/movies" element={<Movies />} />
         <Route path="/favourites" element={<Favourite />} />
         <Route path="/myBookings" element={<MyBookings />} />
+        <Route path="/loading/:nextUrl" element={<Loading/>} />
         <Route path="/movies/:id/:date" element={<SeatLayout />} />
         <Route path="/movies/:id" element={<MovieDetails />} />
         <Route path="/admin/*"  element={user ? <Layout /> : (
