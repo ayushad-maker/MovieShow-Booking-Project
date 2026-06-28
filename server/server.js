@@ -10,6 +10,7 @@ import BoookingRouter from "./Routes/bookingRoutes.js";
 import AdminRoutes from "./Routes/adminRoutes.js";
 import UserRouter from "./Routes/userRoutes.js";
 import { connectDB } from "./configs/db.js";
+import { stripeWebhooks } from "./controller/stripeWebhooks.js";
 
 const app = express();
 const port = 3000;
@@ -19,6 +20,8 @@ app.use(cors());
 app.use(clerkMiddleware());
 
 await connectDB();
+
+app.use("/api/stripe",express.raw({type: 'application/json'}),stripeWebhooks);
 
 app.get("/", (req, res) => {
   res.send("server is live");
