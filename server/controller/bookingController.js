@@ -1,14 +1,17 @@
-import { err } from "inngest/types";
 import Booking from "../models/Booking.js";
 import Show from "../models/Show.js";
-import stripe, { Stripe } from "stripe";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import QRCode from "qrcode";
+import { clerkClient } from "@clerk/express";
+import sendBookingEmail from "../utils/sendBookingEmail.js";
 
 export const getAvailableSeats = async (showId, selectedSeats) => {
   try {
     const showData = await Show.findById(showId);
 
     if (!showData) {
-      return res.json({ message: "showData is not found." });
+      return false;
     }
 
     const occupiedSeats = showData.occupiedSeats;
@@ -17,10 +20,8 @@ export const getAvailableSeats = async (showId, selectedSeats) => {
 
     return !isAnySeatTaken;
   } catch (error) {
-    return res.json({
-      sucess: "false",
-      message: error.message,
-    });
+    console.log(error);
+    return false;
   }
 };
 
@@ -28,14 +29,13 @@ export const createBooking = async (req, res) => {
   try {
     const { userId } = req.auth();
     const { showId, selectedSeats } = req.body;
-    const { origin } = req.headers;
 
     const isAvailable = await getAvailableSeats(showId, selectedSeats);
 
     if (!isAvailable) {
       return res.json({
-        success: "false",
-        message: "selected Seats are not available.",
+        success: false,
+        message: "Selected seats are not available.",
       });
     }
 
@@ -48,53 +48,151 @@ export const createBooking = async (req, res) => {
       bookedSeats: selectedSeats,
     });
 
-    selectedSeats.map((seat) => {
+    selectedSeats.forEach((seat) => {
       showData.occupiedSeats[seat] = userId;
     });
 
     showData.markModified("occupiedSeats");
-
     await showData.save();
 
-    // payment gateway
-
-    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    const line_items = [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: showData.movie.title,
-          },
-          unit_amount: Math.floor(booking.amount) * 100,
-        },
-        quantity: 1,
-      },
-    ];
-
-    const session = await stripeInstance.checkout.sessions.create({
-      success_url: `${origin}/loading/myBookings`,
-      cancel_url: `${origin}/myBookings`,
-      line_items: line_items,
-      mode: "payment",
-      metadata: {
-        bookingId: booking._id.toString(),
-      },
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+    // Razorpay Instance
+    console.log("KEY ID:", process.env.RAZORPAY_KEY_ID);
+    console.log("KEY SECRET:", process.env.RAZORPAY_KEY_SECRET);
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
-    booking.paymentLink = session.url;
+    // Create Razorpay Order
+    const options = {
+      amount: booking.amount * 100, // amount in paise
+      currency: "INR",
+      receipt: booking._id.toString(),
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    // Save Order ID
+    booking.paymentLink = order.id;
     await booking.save();
 
-    res.json({
+    return res.json({
       success: true,
-      url:session.url,
+      order,
+      bookingId: booking._id,
+      key: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.log("error");
+    console.log(error);
+
     return res.json({
-      sucess: "false",
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const verifyPayment = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+
+    const {
+      bookingId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
+
+    // Find booking and populate show -> movie
+    const booking = await Booking.findById(bookingId).populate({
+      path: "show",
+      populate: {
+        path: "movie",
+      },
+    });
+
+    if (!booking) {
+      return res.json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    // Verify owner
+    if (booking.user.toString() !== userId) {
+      return res.json({
+        success: false,
+        message: "Unauthorized.",
+      });
+    }
+
+    // Verify Razorpay Order
+    if (booking.paymentLink !== razorpay_order_id) {
+      return res.json({
+        success: false,
+        message: "Invalid Razorpay Order.",
+      });
+    }
+
+    // Verify Signature
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (generatedSignature !== razorpay_signature) {
+      return res.json({
+        success: false,
+        message: "Payment verification failed.",
+      });
+    }
+
+    // Generate QR
+    const qrData = JSON.stringify({
+      bookingId: booking._id,
+      movie: booking.show.movie.title,
+      seats: booking.bookedSeats,
+      user: booking.user,
+    });
+
+    booking.qrCode = await QRCode.toDataURL(qrData);
+    booking.isPaid = true;
+    booking.paymentLink = "";
+
+    await booking.save();
+
+    // Fetch Clerk user
+    const user = await clerkClient.users.getUser(userId);
+
+    const email = user.emailAddresses[0].emailAddress;
+
+    // Send Email
+    try {
+      await sendBookingEmail(
+        email,
+        booking.show.movie.title,
+        new Date(booking.show.showDateTime).toLocaleDateString(),
+        new Date(booking.show.showDateTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        booking.bookedSeats,
+        booking.amount,
+        booking.qrCode,
+      );
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+    }
+
+    return res.json({
+      success: true,
+      message: "Payment verified successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.json({
+      success: false,
       message: error.message,
     });
   }
@@ -110,14 +208,15 @@ export const getOccupiedSeats = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "successfully fetched occupied seats",
+      message: "Successfully fetched occupied seats.",
       occupiedSeats,
     });
   } catch (error) {
-    console.log(err);
+    console.log(error);
+
     return res.json({
       success: false,
-      message: err.message,
+      message: error.message,
     });
   }
 };

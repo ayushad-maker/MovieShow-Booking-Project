@@ -5,6 +5,7 @@ import { dateFormat } from "../Lib/dataFormat";
 import Loading from "../Components/Loading";
 import { useAppContext } from "../Context/AppContext";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
@@ -30,7 +31,7 @@ const MyBookings = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log(data.bookings);
+
 
       if (data.success) {
         setBooking(data.bookings);
@@ -47,8 +48,6 @@ const MyBookings = () => {
       getmyBooking();
     }
   }, [user]);
-
-  console.log(booking);
 
   return loading ? (
     <Loading />
@@ -91,10 +90,10 @@ const MyBookings = () => {
                 {item.amount}
               </p>
               {!item.isPaid && (
-                <button className="bg-primary px-4 py-1.5 mb-3 text-sm rounded-full font-medium cursor-pointer">
+                <Link to={item.paymentLink} className="bg-primary px-4 py-1.5 mb-3 text-sm rounded-full font-medium cursor-pointer">
                   {" "}
                   Pay Now
-                </button>
+                </Link>
               )}
             </div>
 
